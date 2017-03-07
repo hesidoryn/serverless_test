@@ -1,0 +1,16 @@
+service: lambda-test
+
+provider:
+  name: aws
+  runtime: nodejs4.3
+
+functions:
+  create:
+    handler: handler.hello
+    events:
+     - http:
+         path: users/create
+         method: get
+         request:
+           template:
+           application/json: '{ "source_ip" : "$context.identity.sourceIp" }'
