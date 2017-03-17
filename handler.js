@@ -1,16 +1,34 @@
-'use strict';
+var AWS = require("aws-sdk");
+var docClient = new AWS.DynamoDB.DocumentClient();
 
-module.exports.hello = (event, context, callback) => {
-  const response = {
-    statusCode: 200,
-    body: JSON.stringify({
-      message: 'Go Serverless v1.0! Your function executed successfully! Your IP Address is ' + event.source_ip,
-      input: event,
-    }),
+exports.hello = (event, context, callback) => {
+  var params = {};
+  params.TableName = "paralect";
+  params.Key = {
+    "ipAddress": event.source_ip
   };
+  params.UpdateExpression = "set viewCount = viewCount + :val";
+  params.ExpressionAttributeValues = {
+    ":val":1
+  };
+  params.ReturnValues = "UPDATED_NEW";
 
-  callback(null, response);
-
-  // Use this code if you don't use the http event with the LAMBDA-PROXY integration
-  // callback(null, { message: 'Go Serverless v1.0! Your function executed successfully!', event });
-};
+  docClient.update(params, function(err, data){
+    if(err.message === 'The provided expression refers to an attribute that does not exist in the item'){
+      docClient.put({
+        TableName: "paralect",
+        Item: {
+          "ipAddress": event.source_ip,
+          "viewCount": 1
+        }
+      }, function(err, data){
+        const response = '<p style="color:red;">Your IP Address: ' + event.source_ip + '. View count: ' + 1 +  '.</p>';
+        callback(null, response);
+      })
+    } else {
+      const response = '<div>' + err + '</div><p style="color:red;">Your IP Address: ' + event.source_ip + '. View count: ' + data.Attributes.viewCount +  '.</p>';
+      callback(null, response);
+    }
+    callback(null, err);
+  });
+}

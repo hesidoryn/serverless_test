@@ -3,14 +3,20 @@ service: lambda-test
 provider:
   name: aws
   runtime: nodejs4.3
+  region: us-west-2
 
 functions:
-  create:
+  hello:
     handler: handler.hello
     events:
      - http:
-         path: users/create
+         path: hello
          method: get
+         integration: lambda
+         response:
+            headers:
+              Content-Type: "'text/html'"
+            template: $input.path('$')
          request:
            template:
-           application/json: '{ "source_ip" : "$context.identity.sourceIp" }'
+             application/json: '{ "source_ip" : "$context.identity.sourceIp" }'
